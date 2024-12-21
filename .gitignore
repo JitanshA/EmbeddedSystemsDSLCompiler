@@ -1,0 +1,28 @@
+# Build files
+/build/
+/*.o
+/*.out
+
+# Test output files
+/tests/output/
+
+# Temporary files
+*.tmp
+*.log
+
+# Editor/IDE files
+.vscode/
+*.swp
+*.swo
+.idea/
+*.DS_Store
+
+# System files
+Thumbs.db
+.DS_Store
+
+# Compiled binaries
+/compiler
+
+# GitHub Actions cache
+.github/workflows/cache/
