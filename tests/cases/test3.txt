@@ -1,0 +1,2 @@
+SET_PIN(5, HIGH);
+int status = READ_PIN(7);

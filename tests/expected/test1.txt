@@ -1,0 +1,2 @@
+MOV a, 0      ; Initialize int variable
+MOV flag, 1   ; Initialize boolean variable to true

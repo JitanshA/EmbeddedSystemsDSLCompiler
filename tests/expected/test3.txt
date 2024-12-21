@@ -1,0 +1,2 @@
+GPIO_SET 5, HIGH
+GPIO_READ 7, status

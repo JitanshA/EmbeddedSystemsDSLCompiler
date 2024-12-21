@@ -1,0 +1,5 @@
+LOAD b
+LOAD c
+MUL 2
+ADD b
+STORE a
