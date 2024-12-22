@@ -59,4 +59,13 @@ typedef struct
     int column;     // Column number where the token starts
 } Token;
 
+typedef struct {
+    Token ** tokens;
+    int capacity;
+    int size;
+} TokenStream;
+
+extern TokenStream create_new_token_stream();
+extern Token *create_new_token(TokenType token_type, char *string, int line, int column);
+
 #endif // TOKEN_H

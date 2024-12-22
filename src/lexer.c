@@ -271,20 +271,6 @@ static TokenType get_token_type(char* string) {
     return TOKEN_ERROR;
 }
 
-static Token* create_new_token(TokenType token_type, char* string, int line, int column) {
-    Token* new_token = calloc(1, sizeof(Token));
-    if (!new_token) {
-        return NULL;
-    }
-
-    new_token->line = line;
-    new_token->column = column;
-    new_token->lexeme = strdup(string);
-    new_token->type = token_type;
-
-    return new_token;
-}
-
 static int is_valid_number_token(char* string) {
     size_t length = strlen(string);
     for (size_t i = 0; i < length; i++) {
