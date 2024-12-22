@@ -35,6 +35,45 @@ Token **get_token_stream(char *input)
             {
                 char *last_char = NULL;
 
+                // **Check if the first character is a special character**
+                if (split_input_space[0] == ',' || split_input_space[0] == ';' ||
+                    split_input_space[0] == '(' || split_input_space[0] == ')' ||
+                    split_input_space[0] == '{' || split_input_space[0] == '}')
+                {
+                    char special_char_str[2] = {split_input_space[0], '\0'};
+                    TokenType token_type = get_token_type(special_char_str);
+
+                    if (token_type != TOKEN_ERROR)
+                    {
+                        Token *new_token = create_new_token(token_type, special_char_str, line_number, column_number);
+                        if (!new_token)
+                        {
+                            // TODO: Handle error
+                            free(token_stream);
+                            return NULL;
+                        }
+
+                        // Add the token to the stream
+                        if (token_count >= capacity)
+                        {
+                            capacity *= 2;
+                            token_stream = realloc(token_stream, capacity * sizeof(Token *));
+                            if (!token_stream)
+                            {
+                                // TODO: Handle error
+                                return NULL;
+                            }
+                        }
+
+                        token_stream[token_count++] = new_token;
+                        column_number++; // Special characters occupy one column
+
+                        // Remove the first character from the current token
+                        memmove(split_input_space, split_input_space + 1, strlen(split_input_space)); // Shift left
+                        continue;                                                                     // Re-check the remaining string
+                    }
+                }
+
                 // Check if the last character is a special character
                 size_t len = strlen(split_input_space);
                 if (len > 0 && (split_input_space[len - 1] == ',' || split_input_space[len - 1] == ';' ||
