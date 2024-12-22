@@ -1,6 +1,9 @@
 #include "errors.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+const char *ErrorStageNames[] = {"LEXER", "PARSER", "CODEGEN"};
 
 // Method to create a new error list with default capacity
 ErrorList *create_new_error_list() {
@@ -27,6 +30,11 @@ void add_new_error(ErrorList *error_list, int line, int column, ErrorStage stage
         return;
     }
 
+    // Check if the stage provided is a valid stage
+    if (stage < LEXER || stage > CODEGEN) {
+        return;
+    }
+
     Error *error = calloc(1, sizeof(Error));
     if (!error) {
         return;
@@ -50,8 +58,24 @@ void add_new_error(ErrorList *error_list, int line, int column, ErrorStage stage
     error_list->size++;
 }
 
-void report_errors(ErrorList *error_list);
-void free_error_list(ErrorList *error_list);
+// Method to print all the errors in the list
+void report_errors(ErrorList *error_list) {
+    for (int i = 0; i < error_list->size; i++) {
+        printf("Error at line %d column %d during stage %s\nError message: %s\n\n",
+                error_list->errors[i]->line, error_list->errors[i]->column,
+                ErrorStageNames[error_list->errors[i]->stage], error_list->errors[i]->message);
+    }
+}
+
+// Method to free the error list memory
+void free_error_list(ErrorList *error_list) {
+    for (int i = 0; i < error_list->size; i++) {
+        free(error_list->errors[i]);
+    }
+
+    free(error_list->errors);
+    free(error_list);
+}
 
 // Helper method to double the error list capacity
 static int resize_error_list(ErrorList *error_list) {

@@ -24,7 +24,7 @@ typedef struct {
 } ErrorList;
 
 extern ErrorList *create_new_error_list();
-extern void* add_new_error(ErrorList *error_list, int line, int column, ErrorStage stage, char* message);
+extern void add_new_error(ErrorList *error_list, int line, int column, ErrorStage stage, char* message);
 extern void report_errors(ErrorList *error_list);
 extern void free_error_list(ErrorList *error_list);
 
