@@ -3,8 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "errors.h"
 
-Token **get_token_stream(char *input)
+Token **get_token_stream(char *input, ErrorList *error_list)
 {
     const char delim_newline[] = "\n";
     const char delim_space[] = " ";
@@ -16,7 +17,7 @@ Token **get_token_stream(char *input)
     Token **token_stream = calloc(capacity, sizeof(Token *));
     if (!token_stream)
     {
-        // TODO: Handle Error
+        add_new_error(error_list, line_number, 0, LEXER, "Failed to allocate memory for token stream");
         return NULL;
     }
 
@@ -48,7 +49,7 @@ Token **get_token_stream(char *input)
                         Token *new_token = create_new_token(token_type, special_char_str, line_number, column_number);
                         if (!new_token)
                         {
-                            // TODO: Handle error
+                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
                             free(token_stream);
                             return NULL;
                         }
@@ -60,7 +61,7 @@ Token **get_token_stream(char *input)
                             token_stream = realloc(token_stream, capacity * sizeof(Token *));
                             if (!token_stream)
                             {
-                                // TODO: Handle error
+                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
                                 return NULL;
                             }
                         }
@@ -94,7 +95,7 @@ Token **get_token_stream(char *input)
                         Token *new_token = create_new_token(token_type, split_input_space, line_number, column_number);
                         if (!new_token)
                         {
-                            // TODO: Handle Error
+                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
                             free(token_stream);
                             return NULL;
                         }
@@ -106,7 +107,7 @@ Token **get_token_stream(char *input)
                             token_stream = realloc(token_stream, capacity * sizeof(Token *));
                             if (!token_stream)
                             {
-                                // TODO: Handle Error
+                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
                                 return NULL;
                             }
                         }
@@ -115,7 +116,7 @@ Token **get_token_stream(char *input)
                     }
                     else
                     {
-                        // TODO: Handle Error
+                        add_new_error(error_list, line_number, column_number, LEXER, "Invalid token found");
                     }
                 }
 
@@ -130,7 +131,7 @@ Token **get_token_stream(char *input)
                         Token *new_token = create_new_token(token_type, special_char_str, line_number, column_number);
                         if (!new_token)
                         {
-                            // TODO: Handle Error
+                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
                             free(token_stream);
                             return NULL;
                         }
@@ -142,7 +143,7 @@ Token **get_token_stream(char *input)
                             token_stream = realloc(token_stream, capacity * sizeof(Token *));
                             if (!token_stream)
                             {
-                                // TODO: Handle error
+                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
                                 return NULL;
                             }
                         }
@@ -151,7 +152,7 @@ Token **get_token_stream(char *input)
                     }
                     else
                     {
-                        // TODO: Handle error
+                        add_new_error(error_list, line_number, column_number, LEXER, "Invalid token found");
                     }
                 }
 
