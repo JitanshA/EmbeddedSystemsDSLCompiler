@@ -1,6 +1,8 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#define DEFAULT_TOKEN_STREAM_CAPACITY 128
+
 // Enum for token types
 typedef enum
 {
@@ -65,7 +67,8 @@ typedef struct {
     int size;
 } TokenStream;
 
-extern TokenStream create_new_token_stream();
-extern Token *create_new_token(TokenType token_type, char *string, int line, int column);
+extern int add_new_token(TokenStream *token_stream, TokenType token_type, char *string, int line, int column);
+extern TokenStream *create_new_token_stream();
+extern void free_token_stream(TokenStream *token_stream);
 
 #endif // TOKEN_H
