@@ -70,5 +70,6 @@ typedef struct {
 extern int add_new_token(TokenStream *token_stream, TokenType token_type, char *string, int line, int column);
 extern TokenStream *create_new_token_stream();
 extern void free_token_stream(TokenStream *token_stream);
+extern const char *token_type_to_string(TokenType type);
 
 #endif // TOKEN_H
