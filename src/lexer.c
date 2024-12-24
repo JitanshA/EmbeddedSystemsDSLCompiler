@@ -5,196 +5,59 @@
 #include <ctype.h>
 #include "errors.h"
 
-Token **get_token_stream(char *input, ErrorList *error_list)
+static int is_valid_number_token(char *string)
 {
-    const char delim_newline[] = "\n";
-    const char delim_space[] = " ";
-    int line_number = 1; // Tracks the current line number
-    int token_count = 0; // Tracks the number of tokens generated
-    int capacity = 128;  // Initial capacity for the token stream
-
-    // Allocate space for the token stream
-    Token **token_stream = calloc(capacity, sizeof(Token *));
-    if (!token_stream)
-    {
-        add_new_error(error_list, line_number, 0, LEXER, "Failed to allocate memory for token stream");
-        return NULL;
+    if (!string) {
+        return 0;
     }
 
-    // Split the input into lines
-    char *split_input_newline = strtok(input, delim_newline);
-    while (split_input_newline)
+    size_t length = strlen(string);
+    for (size_t i = 0; i < length; i++)
     {
-        int column_number = 1; // Tracks the column number for tokens in the current line
-
-        // Split the current line into tokens by spaces
-        char *split_input_space = strtok(split_input_newline, delim_space);
-        while (split_input_space)
+        if (!isdigit(string[i]))
         {
-            // Handle trailing special characters (e.g., `SET_PIN,`)
-            while (split_input_space[0])
-            {
-                char *last_char = NULL;
-
-                // **Check if the first character is a special character**
-                if (split_input_space[0] == ',' || split_input_space[0] == ';' ||
-                    split_input_space[0] == '(' || split_input_space[0] == ')' ||
-                    split_input_space[0] == '{' || split_input_space[0] == '}')
-                {
-                    char special_char_str[2] = {split_input_space[0], '\0'};
-                    TokenType token_type = get_token_type(special_char_str);
-
-                    if (token_type != TOKEN_ERROR)
-                    {
-                        Token *new_token = create_new_token(token_type, special_char_str, line_number, column_number);
-                        if (!new_token)
-                        {
-                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
-                            free(token_stream);
-                            return NULL;
-                        }
-
-                        // Add the token to the stream
-                        if (token_count >= capacity)
-                        {
-                            capacity *= 2;
-                            token_stream = realloc(token_stream, capacity * sizeof(Token *));
-                            if (!token_stream)
-                            {
-                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
-                                return NULL;
-                            }
-                        }
-
-                        token_stream[token_count++] = new_token;
-                        column_number++; // Special characters occupy one column
-
-                        // Remove the first character from the current token
-                        memmove(split_input_space, split_input_space + 1, strlen(split_input_space)); // Shift left
-                        continue;                                                                     // Re-check the remaining string
-                    }
-                }
-
-                // Check if the last character is a special character
-                size_t len = strlen(split_input_space);
-                if (len > 0 && (split_input_space[len - 1] == ',' || split_input_space[len - 1] == ';' ||
-                                split_input_space[len - 1] == '(' || split_input_space[len - 1] == ')' ||
-                                split_input_space[len - 1] == '{' || split_input_space[len - 1] == '}'))
-                {
-                    last_char = &split_input_space[len - 1];
-                    split_input_space[len - 1] = '\0'; // Remove the special character from the current token
-                }
-
-                // Get the token type for the current part
-                if (strlen(split_input_space) > 0)
-                {
-                    TokenType token_type = get_token_type(split_input_space);
-                    if (token_type != TOKEN_ERROR)
-                    {
-                        // Create a new token
-                        Token *new_token = create_new_token(token_type, split_input_space, line_number, column_number);
-                        if (!new_token)
-                        {
-                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
-                            free(token_stream);
-                            return NULL;
-                        }
-
-                        // Add the token to the stream
-                        if (token_count >= capacity)
-                        {
-                            capacity *= 2;
-                            token_stream = realloc(token_stream, capacity * sizeof(Token *));
-                            if (!token_stream)
-                            {
-                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
-                                return NULL;
-                            }
-                        }
-                        token_stream[token_count++] = new_token;
-                        column_number += strlen(split_input_space) + 1; // Update column number
-                    }
-                    else
-                    {
-                        add_new_error(error_list, line_number, column_number, LEXER, "Invalid token found");
-                    }
-                }
-
-                // Handle the special character as a separate token, if applicable
-                if (last_char)
-                {
-                    char special_char_str[2] = {*last_char, '\0'};
-                    TokenType token_type = get_token_type(special_char_str);
-                    if (token_type != TOKEN_ERROR)
-                    {
-                        // Create a new token for the special character
-                        Token *new_token = create_new_token(token_type, special_char_str, line_number, column_number);
-                        if (!new_token)
-                        {
-                            add_new_error(error_list, line_number, column_number, LEXER, "Failed to allocate memory for new token");
-                            free(token_stream);
-                            return NULL;
-                        }
-
-                        // Add the token to the stream
-                        if (token_count >= capacity)
-                        {
-                            capacity *= 2;
-                            token_stream = realloc(token_stream, capacity * sizeof(Token *));
-                            if (!token_stream)
-                            {
-                                add_new_error(error_list, line_number, column_number, LEXER, "Failed to reallocate memory for token stream");
-                                return NULL;
-                            }
-                        }
-                        token_stream[token_count++] = new_token;
-                        column_number++; // Special characters occupy one column
-                    }
-                    else
-                    {
-                        add_new_error(error_list, line_number, column_number, LEXER, "Invalid token found");
-                    }
-                }
-
-                break; // Process the next space-separated token
-            }
-
-            // Get the next token (space-separated)
-            split_input_space = strtok(NULL, delim_space);
+            return 0;
         }
-
-        // Get the next line
-        split_input_newline = strtok(NULL, delim_newline);
-        line_number++;
     }
 
-    // Add an EOF token to signify the end of the token stream
-    Token *eof_token = create_new_token(TOKEN_EOF, "EOF", line_number, 0);
-    if (!eof_token)
-    {
-        free(token_stream);
-        return NULL;
-    }
-    token_stream[token_count++] = eof_token;
-
-    return token_stream;
+    return 1;
 }
 
-static TokenType get_token_type(char* string) {
-    if (!string || strlen(string) == 0) {
+static int is_valid_identifier_token(char *string)
+{
+    if (!string || !isalpha(*string)) {
+        return 0;
+    }
+
+    size_t length = strlen(string);
+    for (size_t i = 1; i < length; i++)
+    {
+        if (!(isalnum(string[i]) || string[i] == '_'))
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static TokenType get_token_type(char *string)
+{
+    if (!string || strlen(string) == 0)
+    {
         return TOKEN_ERROR;
     }
 
     // Check for keywords and punctuation
-    if (strcmp(string, "int") == 0) 
+    if (strcmp(string, "int") == 0)
     {
         return TOKEN_INT;
-    } 
-    else if (strcmp(string, "bool") == 0) 
+    }
+    else if (strcmp(string, "bool") == 0)
     {
         return TOKEN_BOOL;
     }
-    else if (strcmp(string, "true") == 0) 
+    else if (strcmp(string, "true") == 0)
     {
         return TOKEN_TRUE;
     }
@@ -256,12 +119,15 @@ static TokenType get_token_type(char* string) {
     }
 
     // Check for identifiers and numbers
-    if (isdigit(string[0])) {
-        if (is_valid_number_token(string)) 
+    if (isdigit(string[0]))
+    {
+        if (is_valid_number_token(string))
         {
             return TOKEN_NUMBER;
         }
-    } else {
+    }
+    else
+    {
         if (is_valid_identifier_token(string))
         {
             return TOKEN_IDENTIFIER;
@@ -271,31 +137,134 @@ static TokenType get_token_type(char* string) {
     return TOKEN_ERROR;
 }
 
-static int is_valid_number_token(char* string) {
-    size_t length = strlen(string);
-    for (size_t i = 0; i < length; i++) {
-        if (!isdigit(string[i])) {
-            return 0;
-        }
-    }
-
-    return 1;
+static int is_special_character(char c)
+{
+    return (c == ',' || c == ';' || c == '(' ||
+            c == ')' || c == '{' || c == '}' );
 }
 
-static int is_valid_identifier_token(char *string)
+TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list)
 {
-    if (!isalpha(string[0])) {
-        return 0;
-    }
-
-    size_t length = strlen(string);
-    for (size_t i = 1; i < length; i++)
+    if (!input || strspn(input, " \t\n") == strlen(input))
     {
-        if (!(isalnum(string[i]) || string[i] == '_'))
-        {
-            return 0;
-        }
+        add_new_error(error_list, 0, 0, LEXER, "Input contains no valid tokens");
+        return NULL;
     }
 
-    return 1;
+    TokenStream *token_stream = create_new_token_stream();
+    if (!token_stream)
+    {
+        add_new_error(error_list, 0, 0, LEXER, "Failed to initialise token stream");
+        return NULL;
+    }
+
+    int line_number = 1, column_number = 1;
+    char *cursor = input;
+
+    while (*cursor)
+    {
+        // Skip whitespace
+        if (isspace(*cursor))
+        {
+            if (*cursor == '\n')
+            {
+                line_number++;
+                column_number = 1;
+            }
+            else
+            {
+                column_number++;
+            }
+            cursor++;
+            continue;
+        }
+
+        // Handle special characters
+        if (is_special_character(*cursor))
+        {
+            char special_char_str[2] = {*cursor, '\0'};
+            if (!add_new_token(token_stream, get_token_type(special_char_str), special_char_str, line_number, column_number))
+            {
+                add_new_error(error_list, line_number, column_number, LEXER, "Failed to create new token");
+                free_token_stream(token_stream);
+                return NULL;
+            }
+            column_number++;
+            cursor++;
+            continue;
+        }
+
+        // Handle keywords, identifiers, and numbers
+        if (isalnum(*cursor) || *cursor == '_')
+        {
+            char token_buffer[256];
+            int token_length = 0;
+
+            while (*cursor && (isalnum(*cursor) || *cursor == '_'))
+            {
+                if (token_length < 255)
+                {
+                    token_buffer[token_length++] = *cursor;
+
+                    // Check for undelimited token boundary
+                    if (token_length > 1 && get_token_type(token_buffer) == TOKEN_ERROR)
+                    {
+                        // Undo the last character and process the valid token so far
+                        token_buffer[--token_length] = '\0';
+                        if (!add_new_token(token_stream, get_token_type(token_buffer), token_buffer, line_number, column_number - token_length))
+                        {
+                            add_new_error(error_list, line_number, column_number - token_length, LEXER, "Failed to create new token");
+                            free_token_stream(token_stream);
+                            return NULL;
+                        }
+
+                        // Log an error for the undelimited part
+                        add_new_error(error_list, line_number, column_number, LEXER, "Undelimited token detected");
+                        break;
+                    }
+                }
+                else
+                {
+                    add_new_error(error_list, line_number, column_number, LEXER, "Token exceeds maximum length");
+                    while (*cursor && (isalnum(*cursor) || *cursor == '_'))
+                    {
+                        cursor++;
+                        column_number++;
+                    }
+                    token_length = 0;
+                    break;
+                }
+                cursor++;
+                column_number++;
+            }
+
+            // Process the valid token if no boundary error was detected
+            if (token_length > 0)
+            {
+                token_buffer[token_length] = '\0';
+                if (!add_new_token(token_stream, get_token_type(token_buffer), token_buffer, line_number, column_number - token_length))
+                {
+                    add_new_error(error_list, line_number, column_number - token_length, LEXER, "Failed to create new token");
+                    free_token_stream(token_stream);
+                    return NULL;
+                }
+            }
+            continue;
+        }
+
+        // Handle unexpected characters
+        add_new_error(error_list, line_number, column_number, LEXER, "Unexpected character encountered");
+        cursor++;
+        column_number++;
+    }
+
+    // Add an EOF token to signify the end of the token stream
+    if (!add_new_token(token_stream, TOKEN_EOF, "EOF", line_number, column_number))
+    {
+        add_new_error(error_list, line_number, column_number, LEXER, "Failed to create EOF token");
+        free_token_stream(token_stream);
+        return NULL;
+    }
+
+    return token_stream;
 }
