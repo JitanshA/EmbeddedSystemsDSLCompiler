@@ -169,12 +169,119 @@ static TokenType get_token_type(char *string)
     return TOKEN_ERROR;
 }
 
+// Check if a character is a special character i.e. punctuation
 static int is_special_character(char c)
 {
     return (c == ',' || c == ';' || c == '(' ||
             c == ')' || c == '{' || c == '}' );
 }
 
+// Check if a character is a single-character operator
+static int is_single_character_operator(char c)
+{
+    return (c == '+' || c == '-' || c == '*' ||
+            c == '/' || c == '=' || c == '<' ||
+            c == '>' || c == '!');
+}
+
+// Handle whitespace
+static void handle_whitespace(char **cursor, int *line_number, int *column_number)
+{
+    if (**cursor == '\n')
+    {
+        (*line_number)++;
+        *column_number = 1;
+    }
+    else
+    {
+        (*column_number)++;
+    }
+    (*cursor)++;
+}
+
+// Handle special characters
+static int handle_special_character(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
+{
+    char special_char_str[2] = {**cursor, '\0'};
+    TokenType token_type = get_token_type(special_char_str);
+    if (token_type != TOKEN_ERROR)
+    {
+        if (!add_new_token(token_stream, token_type, special_char_str, line_number, column_number))
+        {
+            add_new_error(error_list, line_number, column_number, LEXER, "Failed to create special character token");
+            return 0;
+        }
+    }
+    else
+    {
+        add_new_error(error_list, line_number, column_number, LEXER, "Invalid special character");
+    }
+    (*cursor)++;
+    return 1;
+}
+
+// Handle operators
+static int handle_operator(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
+{
+    char operator_str[2] = {**cursor, '\0'};
+    TokenType token_type = get_token_type(operator_str);
+    if (token_type != TOKEN_ERROR)
+    {
+        if (!add_new_token(token_stream, token_type, operator_str, line_number, column_number))
+        {
+            add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
+            return 0;
+        }
+    }
+    else
+    {
+        add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
+    }
+    (*cursor)++;
+    return 1;
+}
+
+// Handle keywords, identifiers, and numbers
+static int handle_identifier_or_number(TokenStream *token_stream, char **cursor, int *line_number, int *column_number, ErrorList *error_list)
+{
+    char token_buffer[256];
+    int token_length = 0;
+
+    while (**cursor && (isalnum(**cursor) || **cursor == '_'))
+    {
+        if (token_length < 255)
+        {
+            token_buffer[token_length++] = **cursor;
+        }
+        else
+        {
+            add_new_error(error_list, *line_number, *column_number, LEXER, "Token exceeds maximum length");
+            token_length = 0;
+            break;
+        }
+        (*cursor)++;
+        (*column_number)++;
+    }
+
+    token_buffer[token_length] = '\0';
+
+    TokenType token_type = get_token_type(token_buffer);
+    if (token_type != TOKEN_ERROR)
+    {
+        if (!add_new_token(token_stream, token_type, token_buffer, *line_number, *column_number - token_length))
+        {
+            add_new_error(error_list, *line_number, *column_number - token_length, LEXER, "Failed to create identifier/number token");
+            return 0;
+        }
+    }
+    else
+    {
+        add_new_error(error_list, *line_number, *column_number - token_length, LEXER, "Invalid token detected");
+    }
+    return 1;
+}
+
+// Get the token stram from the input file
 TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list)
 {
     if (!input || strspn(input, " \t\n") == strlen(input))
@@ -195,50 +302,27 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
 
     while (*cursor)
     {
-        // Skip whitespace
         if (isspace(*cursor))
         {
-            if (*cursor == '\n')
-            {
-                line_number++;
-                column_number = 1;
-            }
-            else
-            {
-                column_number++;
-            }
-            cursor++;
+            handle_whitespace(&cursor, &line_number, &column_number);
             continue;
         }
 
-        // Handle special characters
         if (is_special_character(*cursor))
         {
-            char special_char_str[2] = {*cursor, '\0'};
-            TokenType token_type = get_token_type(special_char_str);
-            if (token_type != TOKEN_ERROR)
+            if (!handle_special_character(token_stream, &cursor, line_number, column_number, error_list))
             {
-                if (!add_new_token(token_stream, token_type, special_char_str, line_number, column_number))
-                {
-                    add_new_error(error_list, line_number, column_number, LEXER, "Failed to create new token");
-                    free_token_stream(token_stream);
-                    return NULL;
-                }
-            }
-            else
-            {
-                add_new_error(error_list, line_number, column_number, LEXER, "Invalid special character");
+                free_token_stream(token_stream);
+                return NULL;
             }
             column_number++;
-            cursor++;
             continue;
         }
 
-        // Handle operators
-        if (*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/' || *cursor == '=')
+        if (is_single_character_operator(*cursor))
         {
             char operator_str[2] = {*cursor, '\0'};
-            TokenType token_type = get_token_type(operator_str);
+            TokenType token_type = get_operator_type(operator_str);
             if (token_type != TOKEN_ERROR)
             {
                 if (!add_new_token(token_stream, token_type, operator_str, line_number, column_number))
@@ -252,60 +336,26 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
             {
                 add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
             }
-            column_number++;
             cursor++;
+            column_number++;
             continue;
         }
 
-        // Handle keywords, identifiers, and numbers
         if (isalnum(*cursor) || *cursor == '_')
         {
-            char token_buffer[256];
-            int token_length = 0;
-
-            // Collect alphanumeric characters into the token buffer
-            while (*cursor && (isalnum(*cursor) || *cursor == '_'))
+            if (!handle_identifier_or_number(token_stream, &cursor, &line_number, &column_number, error_list))
             {
-                if (token_length < 255)
-                {
-                    token_buffer[token_length++] = *cursor;
-                }
-                else
-                {
-                    add_new_error(error_list, line_number, column_number, LEXER, "Token exceeds maximum length");
-                    token_length = 0;
-                    break;
-                }
-                cursor++;
-                column_number++;
-            }
-            token_buffer[token_length] = '\0';
-
-            // Determine the type of the token
-            TokenType token_type = get_token_type(token_buffer);
-            if (token_type != TOKEN_ERROR)
-            {
-                if (!add_new_token(token_stream, token_type, token_buffer, line_number, column_number - token_length))
-                {
-                    add_new_error(error_list, line_number, column_number - token_length, LEXER, "Failed to create new token");
-                    free_token_stream(token_stream);
-                    return NULL;
-                }
-            }
-            else
-            {
-                add_new_error(error_list, line_number, column_number - token_length, LEXER, "Invalid token detected");
+                free_token_stream(token_stream);
+                return NULL;
             }
             continue;
         }
 
-        // Handle unexpected characters
         add_new_error(error_list, line_number, column_number, LEXER, "Unrecognized or invalid token");
         cursor++;
         column_number++;
     }
 
-    // Add an EOF token to signify the end of the token stream
     if (!add_new_token(token_stream, TOKEN_EOF, "EOF", line_number, column_number))
     {
         add_new_error(error_list, line_number, column_number, LEXER, "Failed to create EOF token");
