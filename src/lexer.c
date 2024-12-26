@@ -138,11 +138,19 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
         if (is_special_character(*cursor))
         {
             char special_char_str[2] = {*cursor, '\0'};
-            if (!add_new_token(token_stream, get_token_type(special_char_str), special_char_str, line_number, column_number))
+            TokenType token_type = get_token_type(special_char_str);
+            if (token_type != TOKEN_ERROR)
             {
-                add_new_error(error_list, line_number, column_number, LEXER, "Failed to create new token");
-                free_token_stream(token_stream);
-                return NULL;
+                if (!add_new_token(token_stream, token_type, special_char_str, line_number, column_number))
+                {
+                    add_new_error(error_list, line_number, column_number, LEXER, "Failed to create new token");
+                    free_token_stream(token_stream);
+                    return NULL;
+                }
+            }
+            else
+            {
+                add_new_error(error_list, line_number, column_number, LEXER, "Invalid special character");
             }
             column_number++;
             cursor++;
@@ -155,62 +163,44 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
             char token_buffer[256];
             int token_length = 0;
 
+            // Collect alphanumeric characters into the token buffer
             while (*cursor && (isalnum(*cursor) || *cursor == '_'))
             {
                 if (token_length < 255)
                 {
                     token_buffer[token_length++] = *cursor;
-
-                    // Check for undelimited token boundary
-                    if (token_length > 1 && get_token_type(token_buffer) == TOKEN_ERROR)
-                    {
-                        // Undo the last character and process the valid token so far
-                        token_buffer[--token_length] = '\0';
-                        if (!add_new_token(token_stream, get_token_type(token_buffer), token_buffer, line_number, column_number - token_length))
-                        {
-                            add_new_error(error_list, line_number, column_number - token_length, LEXER, "Failed to create new token");
-                            free_token_stream(token_stream);
-                            return NULL;
-                        }
-
-                        // Log an error for the undelimited part
-                        add_new_error(error_list, line_number, column_number, LEXER, "Undelimited token detected");
-                        break;
-                    }
                 }
                 else
                 {
                     add_new_error(error_list, line_number, column_number, LEXER, "Token exceeds maximum length");
-                    while (*cursor && (isalnum(*cursor) || *cursor == '_'))
-                    {
-                        // Truncate overly long tokens
-                        token_buffer[token_length] = '\0';
-                        cursor++;
-                        column_number++;
-                    }
                     token_length = 0;
                     break;
                 }
                 cursor++;
                 column_number++;
             }
+            token_buffer[token_length] = '\0';
 
-            // Process the valid token if no boundary error was detected
-            if (token_length > 0)
+            // Determine the type of the token
+            TokenType token_type = get_token_type(token_buffer);
+            if (token_type != TOKEN_ERROR)
             {
-                token_buffer[token_length] = '\0';
-                if (!add_new_token(token_stream, get_token_type(token_buffer), token_buffer, line_number, column_number - token_length))
+                if (!add_new_token(token_stream, token_type, token_buffer, line_number, column_number - token_length))
                 {
                     add_new_error(error_list, line_number, column_number - token_length, LEXER, "Failed to create new token");
                     free_token_stream(token_stream);
                     return NULL;
                 }
             }
+            else
+            {
+                add_new_error(error_list, line_number, column_number - token_length, LEXER, "Invalid token detected");
+            }
             continue;
         }
 
         // Handle unexpected characters
-        add_new_error(error_list, line_number, column_number, LEXER, "Unexpected character encountered");
+        add_new_error(error_list, line_number, column_number, LEXER, "Unrecognized or invalid token");
         cursor++;
         column_number++;
     }
