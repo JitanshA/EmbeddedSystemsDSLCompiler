@@ -184,6 +184,14 @@ static int is_single_character_operator(char c)
             c == '>' || c == '!');
 }
 
+// Check if two characters form a double-character operator
+static int is_double_character_operator(char c1, char c2)
+{
+    char operator_str[3] = {c1, c2, '\0'};
+    TokenType token_type = get_operator_type(operator_str);
+    return token_type != TOKEN_ERROR;
+}
+
 // Handle whitespace
 static void handle_whitespace(char **cursor, int *line_number, int *column_number)
 {
@@ -220,7 +228,7 @@ static int handle_special_character(TokenStream *token_stream, char **cursor, in
     return 1;
 }
 
-// Handle operators
+// Handle single character operators
 static int handle_single_character_operator(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
 {
     char operator_str[2] = {**cursor, '\0'};
@@ -238,6 +246,33 @@ static int handle_single_character_operator(TokenStream *token_stream, char **cu
         add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
     }
     (*cursor)++;
+    return 1;
+}
+
+// Handle double character operators
+static int handle_double_character_operator(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
+{
+    if (!(*cursor) || !(*(*cursor + 1)))
+    {
+        add_new_error(error_list, line_number, column_number, LEXER, "Unexpected end of input for double-character operator");
+        return 0;
+    }
+
+    char operator_str[3] = {**cursor, *(*cursor+1), '\0'};
+    TokenType token_type = get_token_type(operator_str);
+    if (token_type != TOKEN_ERROR)
+    {
+        if (!add_new_token(token_stream, token_type, operator_str, line_number, column_number))
+        {
+            add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
+            return 0;
+        }
+    }
+    else
+    {
+        add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
+    }
+    (*cursor)+=2;
     return 1;
 }
 
@@ -333,11 +368,21 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
             continue;
         }
 
+        if (*(cursor + 1) && is_double_character_operator(*cursor, *(cursor + 1)))
+        {
+            if (!handle_double_character_operator(token_stream, &cursor, line_number, column_number, error_list))
+            {
+                free_token_stream(token_stream);
+                return NULL;
+            }
+            column_number += 2;
+            continue;
+        }
+
         if (is_single_character_operator(*cursor))
         {
             if (!handle_single_character_operator(token_stream, &cursor, line_number, column_number, error_list))
             {
-                add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
                 free_token_stream(token_stream);
                 return NULL;
             }
