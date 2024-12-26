@@ -370,6 +370,12 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
         column_number++;
     }
 
+    // If the last character processed was a newline i.e. the input ended with newline, increment the line number
+    if (*(cursor - 1) == '\n') {
+        line_number++;
+        column_number = 1;
+    }
+
     if (!add_new_token(token_stream, TOKEN_EOF, "EOF", line_number, column_number))
     {
         add_new_error(error_list, line_number, column_number, LEXER, "Failed to create EOF token");
