@@ -1,0 +1,7 @@
+TOKEN_EOF "EOF" [line: 1, column: 3]
+Error at line 1 column 1 during stage LEXER
+Error message: Unrecognized or invalid token
+
+Error at line 1 column 2 during stage LEXER
+Error message: Unrecognized or invalid token
+

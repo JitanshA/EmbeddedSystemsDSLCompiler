@@ -4,7 +4,8 @@
 /*.out
 
 # Test output files
-/tests/output/
+/tests/lexer/actual_lexer/
+/lexer
 
 # Temporary files
 *.tmp

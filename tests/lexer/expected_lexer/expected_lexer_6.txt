@@ -1,0 +1,8 @@
+TOKEN_INT "int" [line: 1, column: 1]
+TOKEN_IDENTIFIER "foo" [line: 1, column: 5]
+TOKEN_NUMBER "123" [line: 1, column: 11]
+TOKEN_SEMICOLON ";" [line: 1, column: 14]
+TOKEN_EOF "EOF" [line: 1, column: 15]
+Error at line 1 column 9 during stage LEXER
+Error message: Unrecognized or invalid token
+

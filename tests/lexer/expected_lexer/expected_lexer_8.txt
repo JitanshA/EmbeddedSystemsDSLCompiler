@@ -1,0 +1,5 @@
+TOKEN_SEMICOLON ";" [line: 1, column: 258]
+TOKEN_EOF "EOF" [line: 1, column: 259]
+Error at line 1 column 1 during stage LEXER
+Error message: Token exceeds maximum length
+

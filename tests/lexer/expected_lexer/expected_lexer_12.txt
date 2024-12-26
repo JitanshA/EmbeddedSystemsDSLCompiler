@@ -1,0 +1,6 @@
+TOKEN_INT "int" [line: 1, column: 1]
+TOKEN_IDENTIFIER "bigNum" [line: 1, column: 5]
+TOKEN_ASSIGN "=" [line: 1, column: 12]
+TOKEN_NUMBER "99999999999999999999" [line: 1, column: 14]
+TOKEN_SEMICOLON ";" [line: 1, column: 34]
+TOKEN_EOF "EOF" [line: 1, column: 35]

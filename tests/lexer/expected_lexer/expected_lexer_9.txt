@@ -1,0 +1,6 @@
+TOKEN_INT "int" [line: 2, column: 1]
+TOKEN_IDENTIFIER "a" [line: 2, column: 5]
+TOKEN_ASSIGN "=" [line: 2, column: 7]
+TOKEN_NUMBER "5" [line: 2, column: 9]
+TOKEN_SEMICOLON ";" [line: 2, column: 10]
+TOKEN_EOF "EOF" [line: 5, column: 1]

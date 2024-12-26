@@ -1,0 +1,9 @@
+int main { 
+    SET_PIN(5, HIGH); 
+    READ_PIN(5); 
+    if (LOW) { 
+        while (true) { 
+            SET_PIN(6, LOW); 
+        } 
+    } 
+}

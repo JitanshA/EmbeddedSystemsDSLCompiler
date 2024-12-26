@@ -1,0 +1,5 @@
+TOKEN_SEMICOLON ";" [line: 1, column: 1]
+TOKEN_SEMICOLON ";" [line: 1, column: 2]
+TOKEN_SEMICOLON ";" [line: 1, column: 3]
+TOKEN_SEMICOLON ";" [line: 1, column: 4]
+TOKEN_EOF "EOF" [line: 1, column: 5]

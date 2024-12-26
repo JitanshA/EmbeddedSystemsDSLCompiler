@@ -1,0 +1,3 @@
+TOKEN_IDENTIFIER "SET_PINLOWHIGH" [line: 1, column: 1]
+TOKEN_SEMICOLON ";" [line: 1, column: 15]
+TOKEN_EOF "EOF" [line: 1, column: 16]
