@@ -48,91 +48,46 @@ static TokenType get_token_type(char *string)
         return TOKEN_ERROR;
     }
 
-    // Check for keywords and punctuation
-    if (strcmp(string, "int") == 0)
-    {
-        return TOKEN_INT;
-    }
-    else if (strcmp(string, "bool") == 0)
-    {
-        return TOKEN_BOOL;
-    }
-    else if (strcmp(string, "true") == 0)
-    {
-        return TOKEN_TRUE;
-    }
-    else if (strcmp(string, "false") == 0)
-    {
-        return TOKEN_FALSE;
-    }
-    else if (strcmp(string, "if") == 0)
-    {
-        return TOKEN_IF;
-    }
-    else if (strcmp(string, "else") == 0)
-    {
-        return TOKEN_ELSE;
-    }
-    else if (strcmp(string, "while") == 0)
-    {
-        return TOKEN_WHILE;
-    }
-    else if (strcmp(string, "SET_PIN") == 0)
-    {
-        return TOKEN_SET_PIN;
-    }
-    else if (strcmp(string, "READ_PIN") == 0)
-    {
-        return TOKEN_READ_PIN;
-    }
-    else if (strcmp(string, "HIGH") == 0)
-    {
-        return TOKEN_HIGH;
-    }
-    else if (strcmp(string, "LOW") == 0)
-    {
-        return TOKEN_LOW;
-    }
-    else if (strcmp(string, ";") == 0)
-    {
-        return TOKEN_SEMICOLON;
-    }
-    else if (strcmp(string, ",") == 0)
-    {
-        return TOKEN_COMMA;
-    }
-    else if (strcmp(string, "(") == 0)
-    {
-        return TOKEN_LPAREN;
-    }
-    else if (strcmp(string, ")") == 0)
-    {
-        return TOKEN_RPAREN;
-    }
-    else if (strcmp(string, "{") == 0)
-    {
-        return TOKEN_LBRACE;
-    }
-    else if (strcmp(string, "}") == 0)
-    {
-        return TOKEN_RBRACE;
-    }
+    // Keywords
+    if (strcmp(string, "int") == 0) return TOKEN_INT;
+    if (strcmp(string, "bool") == 0) return TOKEN_BOOL;
+    if (strcmp(string, "true") == 0) return TOKEN_TRUE;
+    if (strcmp(string, "false") == 0) return TOKEN_FALSE;
+    if (strcmp(string, "if") == 0) return TOKEN_IF;
+    if (strcmp(string, "else") == 0) return TOKEN_ELSE;
+    if (strcmp(string, "while") == 0) return TOKEN_WHILE;
+    if (strcmp(string, "SET_PIN") == 0) return TOKEN_SET_PIN;
+    if (strcmp(string, "READ_PIN") == 0) return TOKEN_READ_PIN;
+    if (strcmp(string, "HIGH") == 0) return TOKEN_HIGH;
+    if (strcmp(string, "LOW") == 0) return TOKEN_LOW;
 
-    // Check for identifiers and numbers
-    if (isdigit(string[0]))
-    {
-        if (is_valid_number_token(string))
-        {
-            return TOKEN_NUMBER;
-        }
-    }
-    else
-    {
-        if (is_valid_identifier_token(string))
-        {
-            return TOKEN_IDENTIFIER;
-        }
-    }
+    // Operators
+    if (strcmp(string, "+") == 0) return TOKEN_PLUS;
+    if (strcmp(string, "-") == 0) return TOKEN_MINUS;
+    if (strcmp(string, "*") == 0) return TOKEN_STAR;
+    if (strcmp(string, "/") == 0) return TOKEN_SLASH;
+    if (strcmp(string, "=") == 0) return TOKEN_ASSIGN;
+    if (strcmp(string, "==") == 0) return TOKEN_EQ;
+    if (strcmp(string, "!=") == 0) return TOKEN_NEQ;
+    if (strcmp(string, "<") == 0) return TOKEN_LT;
+    if (strcmp(string, ">") == 0) return TOKEN_GT;
+    if (strcmp(string, "<=") == 0) return TOKEN_LTE;
+    if (strcmp(string, ">=") == 0) return TOKEN_GTE;
+    if (strcmp(string, "&&") == 0) return TOKEN_AND;
+    if (strcmp(string, "||") == 0) return TOKEN_OR;
+    if (strcmp(string, "!") == 0) return TOKEN_NOT;
+
+    // Punctuation
+    if (strcmp(string, ";") == 0) return TOKEN_SEMICOLON;
+    if (strcmp(string, ",") == 0) return TOKEN_COMMA;
+    if (strcmp(string, "(") == 0) return TOKEN_LPAREN;
+    if (strcmp(string, ")") == 0) return TOKEN_RPAREN;
+    if (strcmp(string, "{") == 0) return TOKEN_LBRACE;
+    if (strcmp(string, "}") == 0) return TOKEN_RBRACE;
+
+    // Identifiers and numbers
+    if (isdigit(string[0]) && is_valid_number_token(string)) return TOKEN_NUMBER;
+    if (is_valid_identifier_token(string)) return TOKEN_IDENTIFIER;
 
     return TOKEN_ERROR;
 }
@@ -228,6 +183,8 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
                     add_new_error(error_list, line_number, column_number, LEXER, "Token exceeds maximum length");
                     while (*cursor && (isalnum(*cursor) || *cursor == '_'))
                     {
+                        // Truncate overly long tokens
+                        token_buffer[token_length] = '\0';
                         cursor++;
                         column_number++;
                     }
