@@ -157,6 +157,29 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
             continue;
         }
 
+        // Handle operators
+        if (*cursor == '+' || *cursor == '-' || *cursor == '*' || *cursor == '/' || *cursor == '=')
+        {
+            char operator_str[2] = {*cursor, '\0'};
+            TokenType token_type = get_token_type(operator_str);
+            if (token_type != TOKEN_ERROR)
+            {
+                if (!add_new_token(token_stream, token_type, operator_str, line_number, column_number))
+                {
+                    add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
+                    free_token_stream(token_stream);
+                    return NULL;
+                }
+            }
+            else
+            {
+                add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
+            }
+            column_number++;
+            cursor++;
+            continue;
+        }
+
         // Handle keywords, identifiers, and numbers
         if (isalnum(*cursor) || *cursor == '_')
         {
