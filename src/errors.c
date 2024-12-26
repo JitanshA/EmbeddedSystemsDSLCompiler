@@ -5,6 +5,21 @@
 
 const char *ErrorStageNames[] = {"LEXER", "PARSER", "CODEGEN"};
 
+// Helper method to double the error list capacity
+static int resize_error_list(ErrorList *error_list)
+{
+    Error **temp_error_list = realloc(error_list->errors, error_list->capacity * 2 * sizeof(Error *));
+    if (!temp_error_list)
+    {
+        return 0;
+    }
+
+    error_list->errors = temp_error_list;
+    error_list->capacity *= 2;
+
+    return 1;
+}
+
 // Method to create a new error list with default capacity
 ErrorList *create_new_error_list() {
     ErrorList *error_list = calloc(1, sizeof(ErrorList));
@@ -75,17 +90,4 @@ void free_error_list(ErrorList *error_list) {
 
     free(error_list->errors);
     free(error_list);
-}
-
-// Helper method to double the error list capacity
-static int resize_error_list(ErrorList *error_list) {
-    Error **temp_error_list = realloc(error_list->errors, error_list->capacity * 2 * sizeof(Error *));
-    if (!temp_error_list) {
-        return 0;
-    }
-
-    error_list->errors = temp_error_list;
-    error_list->capacity *= 2;
-
-    return 1;
 }
