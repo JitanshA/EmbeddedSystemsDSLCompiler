@@ -207,6 +207,21 @@ static void handle_whitespace(char **cursor, int *line_number, int *column_numbe
     (*cursor)++;
 }
 
+// Handle comments
+static void handle_comment(char **cursor, int *line_number, int *column_number) 
+{
+    while (**cursor && **cursor != '\n') {
+        (*cursor)++;
+    }
+
+    if (**cursor == '\n')
+    {
+        (*cursor)++;
+        (*line_number)++;
+        *column_number = 1;
+    }
+}
+
 // Handle special characters
 static int handle_special_character(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
 {
@@ -351,6 +366,11 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
 
     while (*cursor)
     {
+        if (*cursor == '#') {
+            handle_comment(&cursor, &line_number, &column_number);
+            continue;
+        }
+
         if (isspace(*cursor))
         {
             handle_whitespace(&cursor, &line_number, &column_number);
