@@ -246,6 +246,8 @@ static int handle_identifier_or_number(TokenStream *token_stream, char **cursor,
 {
     char token_buffer[256];
     int token_length = 0;
+    int exceeded = 0; // Flag to track if the token length was exceeded
+    int start_column = *column_number; // Copy of the starting column of the token in case token length exceeds
 
     while (**cursor && (isalnum(**cursor) || **cursor == '_'))
     {
@@ -255,28 +257,40 @@ static int handle_identifier_or_number(TokenStream *token_stream, char **cursor,
         }
         else
         {
-            add_new_error(error_list, *line_number, *column_number, LEXER, "Token exceeds maximum length");
-            token_length = 0;
-            break;
+            exceeded = 1;
         }
+
         (*cursor)++;
         (*column_number)++;
     }
 
     token_buffer[token_length] = '\0';
 
+    if (exceeded) {
+        add_new_error(error_list, *line_number, start_column, LEXER, "Token exceeds maximum length");
+
+        // Skip remaining characters of the oversized token
+        while (**cursor && (isalnum(**cursor) || **cursor == '_'))
+        {
+            (*cursor)++;
+            (*column_number)++;
+        }
+
+        return 1; // Continue processing other tokens
+    }
+
     TokenType token_type = get_token_type(token_buffer);
     if (token_type != TOKEN_ERROR)
     {
-        if (!add_new_token(token_stream, token_type, token_buffer, *line_number, *column_number - token_length))
+        if (!add_new_token(token_stream, token_type, token_buffer, *line_number, start_column))
         {
-            add_new_error(error_list, *line_number, *column_number - token_length, LEXER, "Failed to create identifier/number token");
+            add_new_error(error_list, *line_number, start_column, LEXER, "Failed to create identifier/number token");
             return 0;
         }
     }
     else
     {
-        add_new_error(error_list, *line_number, *column_number - token_length, LEXER, "Invalid token detected");
+        add_new_error(error_list, *line_number, start_column, LEXER, "Invalid token detected");
     }
     return 1;
 }
