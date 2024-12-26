@@ -221,7 +221,7 @@ static int handle_special_character(TokenStream *token_stream, char **cursor, in
 }
 
 // Handle operators
-static int handle_operator(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
+static int handle_single_character_operator(TokenStream *token_stream, char **cursor, int line_number, int column_number, ErrorList *error_list)
 {
     char operator_str[2] = {**cursor, '\0'};
     TokenType token_type = get_token_type(operator_str);
@@ -335,22 +335,12 @@ TokenStream *get_token_stream_from_input_file(char *input, ErrorList *error_list
 
         if (is_single_character_operator(*cursor))
         {
-            char operator_str[2] = {*cursor, '\0'};
-            TokenType token_type = get_operator_type(operator_str);
-            if (token_type != TOKEN_ERROR)
+            if (!handle_single_character_operator(token_stream, &cursor, line_number, column_number, error_list))
             {
-                if (!add_new_token(token_stream, token_type, operator_str, line_number, column_number))
-                {
-                    add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
-                    free_token_stream(token_stream);
-                    return NULL;
-                }
+                add_new_error(error_list, line_number, column_number, LEXER, "Failed to create operator token");
+                free_token_stream(token_stream);
+                return NULL;
             }
-            else
-            {
-                add_new_error(error_list, line_number, column_number, LEXER, "Invalid operator detected");
-            }
-            cursor++;
             column_number++;
             continue;
         }
