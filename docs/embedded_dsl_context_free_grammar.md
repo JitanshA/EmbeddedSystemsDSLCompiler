@@ -49,23 +49,28 @@ optional_else -> else { statementList } | ε
 ### Expressions
 ```
 expression -> logical_expression
-logical_expression -> logical_expression && relational_expression
-                   | logical_expression || relational_expression
-                   | relational_expression
-relational_expression -> relational_expression < additive_expression
-                       | relational_expression > additive_expression
-                       | relational_expression <= additive_expression
-                       | relational_expression >= additive_expression
-                       | relational_expression == additive_expression
-                       | relational_expression != additive_expression
-                       | additive_expression
-additive_expression -> additive_expression + multiplicative_expression
-                     | additive_expression - multiplicative_expression
-                     | multiplicative_expression
-multiplicative_expression -> multiplicative_expression * term
-                           | multiplicative_expression / term
-                           | term
+logical_expression -> relational_expression logical_expression_tail
+logical_expression_tail -> && relational_expression logical_expression_tail
+                         | || relational_expression logical_expression_tail
+                         | ε
+relational_expression -> additive_expression relational_expression_tail
+relational_expression_tail -> < additive_expression relational_expression_tail
+                            | > additive_expression relational_expression_tail
+                            | <= additive_expression relational_expression_tail
+                            | >= additive_expression relational_expression_tail
+                            | == additive_expression relational_expression_tail
+                            | != additive_expression relational_expression_tail
+                            | ε
+additive_expression -> multiplicative_expression additive_expression_tail
+additive_expression_tail -> + multiplicative_expression additive_expression_tail
+                          | - multiplicative_expression additive_expression_tail
+                          | ε
+multiplicative_expression -> term multiplicative_expression_tail
+multiplicative_expression_tail -> * term multiplicative_expression_tail
+                                | / term multiplicative_expression_tail
+                                | ε
 term -> identifier | NUMBER | ( expression )
+
 ```
 
 ### Statement List
